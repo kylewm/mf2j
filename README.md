@@ -1,6 +1,6 @@
 # mf2j
 
-In-development Java parser for microformats2.
+In-development Java parser for microformats2. All the hard work is done by [Jsoup](http://jsoup.org/).
 
 Supports: 
 - basic property types
