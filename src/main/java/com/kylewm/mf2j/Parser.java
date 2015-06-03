@@ -3,11 +3,18 @@ package com.kylewm.mf2j;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
+/**
+ * Parse a Microformats2 formatted HTML document.
+ * @author kmahan
+ *
+ */
 public class Parser {
 
     public Parser() {
@@ -19,48 +26,111 @@ public class Parser {
         return parse(text, resource);
     }
 
-    public JsonDict parse(String doc, URI baseURI) {
-        Document text = Jsoup.parse(doc);
-        return parse(text, baseURI);
+    public JsonDict parse(String html, URI baseUri) {
+        Document doc = Jsoup.parse(html);
+        return parse(doc, baseUri);
     }
 
-    public JsonDict parse(Document doc, URI baseURI) {
+    private URI findBaseUri(Document doc, URI baseUri) {
+        Element base = doc.getElementsByTag("base").first();
+        if (base != null && base.hasAttr("href")) {
+            return baseUri.resolve(base.attr("href"));
+        }
+        return baseUri;
+    }
+
+    public JsonDict parse(Document doc, URI baseUri) {
+        baseUri = findBaseUri(doc, baseUri);
+        
         JsonDict dict = new JsonDict();
         JsonList items = dict.getOrCreateList("items");
-        dict.put("rels", new JsonDict());
-        parseMicroformats(doc, baseURI, items);
+        parseMicroformats(doc, baseUri, items);
+        
+        JsonDict rels = dict.getOrCreateDict("rels");
+        JsonDict relUrls = dict.getOrCreateDict("rel-urls");
+        parseRels(doc, baseUri, rels, relUrls);
         return dict;
     }
 
-    private void parseMicroformats(Element elem, URI baseURI, JsonList items) {
-        if (hasRootClass(elem)) {
-            JsonDict itemDict = parseMicroformat(elem, baseURI);
-            items.add(itemDict);
-        }
-        else {
-            for (Element child : elem.children()) {
-                parseMicroformats(child, baseURI, items);
+    private void parseRels(Document doc, URI baseUri, JsonDict relsDict, JsonDict relUrlsDict) {
+        for (Element link : doc.select("a[rel][href],link[rel][href]")) {
+            String relStr = link.attr("rel");
+            String href = link.attr("href");
+            href = baseUri.resolve(href).toString();
+            
+            JsonList rels = new JsonList();
+            for (String rel : relStr.split(" ")) {
+                rel = rel.trim();
+                if (!rel.isEmpty()) {
+                    rels.add(rel);
+                }
+            }
+            
+            for (Object rel : rels) {
+                relsDict.getOrCreateList((String) rel).add(href);
+            }
+            
+            JsonDict urlDict = relUrlsDict.getOrCreateDict(href);
+            urlDict.put("rels", rels);
+            for (String attr : Arrays.asList("hreflang", "media", "type", "title")) {
+                if (link.hasAttr(attr)) {
+                    urlDict.put(attr, link.attr(attr));
+                }
+            }
+            String textContent = link.text().trim();
+            if (!textContent.isEmpty()) {
+                urlDict.put("text", textContent);
             }
         }
     }
 
-    private JsonDict parseMicroformat(Element elem, URI baseURI) {
+    private void parseMicroformats(Element elem, URI baseUri, JsonList items) {
+        if (hasRootClass(elem)) {
+            JsonDict itemDict = parseMicroformat(elem, baseUri);
+            items.add(itemDict);
+        }
+        else {
+            for (Element child : elem.children()) {
+                parseMicroformats(child, baseUri, items);
+            }
+        }
+    }
+
+    private JsonDict parseMicroformat(Element elem, URI baseUri) {
         JsonDict itemDict = new JsonDict();
         itemDict.put("type", getRootClasses(elem));
-        itemDict.put("properties", new JsonDict());
+        JsonDict properties = itemDict.getOrCreateDict("properties");
 
         for (Element child : elem.children()) {
-            parseProperties(child, baseURI, itemDict);
+            parseProperties(child, baseUri, itemDict);
         }
+
+        if (!properties.containsKey("name")) { 
+            String impliedName = parseImpliedName(elem);
+            properties.put("name", impliedName);
+        }
+        if (!properties.containsKey("url")) {
+            String impliedUrl = parseImpliedUrl(elem, baseUri);
+            if (impliedUrl != null) {
+                properties.put("url", impliedUrl);
+            }
+        }
+        if (!properties.containsKey("photo")) {
+            String impliedPhoto = parseImpliedPhoto(elem, baseUri);
+            if (impliedPhoto != null) {
+                properties.put("photo", impliedPhoto);
+            }
+        }
+        
         return itemDict;
     }
 
-    private void parseProperties(Element elem, URI baseURI, JsonDict itemDict) {
+    private void parseProperties(Element elem, URI baseUri, JsonDict itemDict) {
         boolean isProperty = false, isMicroformat = false;
 
         JsonDict valueObj = null;
         if (hasRootClass(elem)) {
-            valueObj = parseMicroformat(elem, baseURI);
+            valueObj = parseMicroformat(elem, baseUri);
             isMicroformat = true;
         }
 
@@ -74,7 +144,7 @@ public class Parser {
             }
             else if (className.startsWith("u-")) {
                 propName = className.substring(2);
-                value = parseUrlProperty(elem, baseURI);
+                value = parseUrlProperty(elem, baseUri);
                 isProperty = true;
             }
             else if (className.startsWith("dt-")) {
@@ -104,7 +174,7 @@ public class Parser {
 
         if (!isProperty && !isMicroformat) {
             for (Element child : elem.children()) {
-                parseProperties(child, baseURI, itemDict);
+                parseProperties(child, baseUri, itemDict);
             }
         }
     }
@@ -124,7 +194,7 @@ public class Parser {
         return elem.text().trim();
     }
 
-    private String parseUrlProperty(Element elem, URI baseURI) {
+    private String parseUrlProperty(Element elem, URI baseUri) {
         String url = null;
         if (("a".equals(elem.tagName()) || "area".equals(elem.tagName())) && elem.hasAttr("href")) {
             url = elem.attr("href");
@@ -137,7 +207,7 @@ public class Parser {
             url = elem.attr("data");
         }
         if (url != null) {
-            return baseURI.resolve(url).toString();
+            return baseUri.resolve(url).toString();
         }
         // TODO value-class-pattern
         if ("abbr".equals(elem.tagName()) && elem.hasAttr("title")) {
@@ -150,7 +220,21 @@ public class Parser {
     }
 
     private String parseDateTimeProperty(Element elem) {
-        return "1982-11-24"; // TODO
+        // TODO value-class-pattern
+        //if time.dt-x[datetime] or ins.dt-x[datetime] or del.dt-x[datetime], then return the datetime attribute
+        if (("time".equals(elem.tagName()) || "ins".equals(elem.tagName()) || "del".equals(elem.tagName()))
+                && elem.hasAttr("datetime")) {
+            return elem.attr("datetime");
+        }
+        if ("abbr".equals(elem.tagName()) && elem.hasAttr("title")) {
+            return elem.attr("title");
+        }
+        if (("data".equals(elem.tagName()) || "input".equals(elem.tagName())) && elem.hasAttr("value")) {
+            return elem.attr("value");
+        }
+        return elem.text().trim();
+        
+        
     }
 
     private JsonDict parseHtmlProperty(Element elem) {
@@ -158,6 +242,143 @@ public class Parser {
         dict.put("html", elem.html());
         dict.put("text", elem.text());
         return dict;
+    }
+    
+    private String parseImpliedPhoto(Element elem, URI baseUri) {
+        String href = parseImpliedPhotoRelative(elem);
+        if (href != null) {
+            return baseUri.resolve(href).toString();
+        }
+        return null;
+    }
+    
+    private String parseImpliedPhotoRelative(Element elem) {
+        String[][] tagAttrs = {
+                {"img", "src"},
+                {"object", "data"},
+        };
+        
+        for (String[] tagAttr : tagAttrs) {
+            String tag = tagAttr[0], attr = tagAttr[1];
+            if (tag.equals(elem.tagName()) && elem.hasAttr(attr)) {
+                return elem.attr(attr);
+            }
+        }
+        
+        for (String[] tagAttr : tagAttrs) {
+            String tag = tagAttr[0], attr = tagAttr[1];
+            Elements children = filterByTag(elem.children(), tag);
+            if (children.size() == 1) {
+                Element child = children.first();
+                if (!hasRootClass(child) && child.hasAttr(attr)) {
+                    return child.attr(attr);
+                }
+            }
+        }
+        
+        Elements children = elem.children();
+        if (children.size() == 1) {
+            Element child = children.first();
+            for (String[] tagAttr : tagAttrs) {
+                String tag = tagAttr[0], attr = tagAttr[1];
+                Elements grandChildren = filterByTag(child.children(), tag);
+                if (grandChildren.size() == 1) {
+                    Element grandChild = grandChildren.first();
+                    if (!hasRootClass(grandChild) && grandChild.hasAttr(attr)) {
+                        return grandChild.attr(attr);
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    private String parseImpliedUrl(Element elem, URI baseUri) {
+        String href = parseImpliedUrlRelative(elem);
+        if (href != null) {
+            return baseUri.resolve(href).toString();
+        }
+        return null;
+    }
+
+    private String parseImpliedUrlRelative(Element elem) {
+        //     if a.h-x[href] or area.h-x[href] then use that [href] for url
+        if (("a".equals(elem.tagName()) || "area".equals(elem.tagName())) 
+                && elem.hasAttr("href")) { 
+            return elem.attr("href");
+        }
+        //else if .h-x>a[href]:only-of-type:not[.h-*] then use that [href] for url
+        //else if .h-x>area[href]:only-of-type:not[.h-*] then use that [href] for url 
+        for (String childTag : Arrays.asList("a", "area")) {
+            Elements children = filterByTag(elem.children(), childTag);
+            if(children.size() == 1) {
+                Element child = children.first();
+                if (!hasRootClass(child) && child.hasAttr("href")) {
+                    return child.attr("href");
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    
+    private String parseImpliedName(Element elem) {
+        if (("img".equals(elem.tagName()) || ("area".equals(elem.tagName())) && elem.hasAttr("alt"))) {
+            return elem.attr("alt");
+        }
+        if ("abbr".equals(elem.tagName()) && elem.hasAttr("title")) {
+            return elem.attr("title");
+        }
+        
+        Elements children = elem.children();
+        if (children.size() == 1) {
+            Element child = children.first();
+            // else if .h-x>img:only-child[alt]:not[.h-*] then use that img alt for name
+            // else if .h-x>area:only-child[alt]:not[.h-*] then use that area alt for name
+            if (!hasRootClass(child) 
+                    && ("img".equals(child.tagName()) || "area".equals(child.tagName()))
+                    && child.hasAttr("alt")) {
+                return child.attr("alt");
+            }
+            // else if .h-x>abbr:only-child[title] then use that abbr title for name
+            if ("abbr".equals(child.tagName()) && child.hasAttr("title")) {
+                return child.attr("title");
+            }
+
+            Elements grandChildren = child.children();
+            if (grandChildren.size() == 1) {
+                Element grandChild = grandChildren.first();
+                // else if .h-x>:only-child>img:only-child[alt]:not[.h-*] then use that img alt for name
+                // else if .h-x>:only-child>area:only-child[alt]:not[.h-*] then use that area alt for name
+                if (!hasRootClass(grandChild) 
+                        && ("img".equals(grandChild.tagName()) || "area".equals(grandChild.tagName()))
+                        && grandChild.hasAttr("alt")) {
+                    return grandChild.attr("alt");
+                }
+                // else if .h-x>:only-child>abbr:only-child[title] use that abbr title for name
+                if ("abbr".equals(grandChild.tagName()) && grandChild.hasAttr("c")) {
+                    return grandChild.attr("title");
+                }
+            }
+        }
+            
+        // else use the textContent of the .h-x for name
+        // drop leading & trailing white-space from name, including nbsp
+        return elem.text().trim();
+    }
+
+    
+
+    private Elements filterByTag(Elements elems, String tag) {
+        Elements filtered = new Elements();
+        for (Element child : elems) {
+            if (tag.equals(child.tagName())) {
+                filtered.add(child);
+            }
+        }
+        return filtered;
     }
 
     private JsonList getRootClasses(Element elem) {
@@ -188,6 +409,9 @@ public class Parser {
 
     public static void main(String args[]) throws IOException, URISyntaxException {
         Parser p = new Parser();
+//        JsonDict result = p.parse(
+//                "<a class=\"h-card\" href=\"/testing/me#profile\"><img src=\"/static/img/profile.jpg\"/>Kyle Mahan</a>", 
+//                new URI("https://kylewm.com"));
         JsonDict result = p.parse(new URI("https://kylewm.com"));
         System.out.println(result);
     }
