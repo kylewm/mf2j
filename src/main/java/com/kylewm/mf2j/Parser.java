@@ -107,18 +107,26 @@ public class Parser {
 
         if (!properties.containsKey("name")) { 
             String impliedName = parseImpliedName(elem);
-            properties.put("name", impliedName);
+            if (impliedName != null) {
+                JsonList implNameList = new JsonList();
+                implNameList.add(impliedName);
+                properties.put("name", implNameList);
+            }
         }
         if (!properties.containsKey("url")) {
             String impliedUrl = parseImpliedUrl(elem, baseUri);
             if (impliedUrl != null) {
-                properties.put("url", impliedUrl);
+                JsonList implUrlList = new JsonList();
+                implUrlList.add(impliedUrl);
+                properties.put("url", implUrlList);
             }
         }
         if (!properties.containsKey("photo")) {
             String impliedPhoto = parseImpliedPhoto(elem, baseUri);
             if (impliedPhoto != null) {
-                properties.put("photo", impliedPhoto);
+                JsonList implPhotoList = new JsonList();
+                implPhotoList.add(impliedPhoto);
+                properties.put("photo", implPhotoList);
             }
         }
         
