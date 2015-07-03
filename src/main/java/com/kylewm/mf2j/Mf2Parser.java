@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,10 +16,24 @@ import org.jsoup.select.Elements;
  * @author kmahan
  *
  */
-public class Parser {
+public class Mf2Parser {
 
-    public Parser() {
+    private boolean includeAlternates;
+    private boolean includeRelUrls;
 
+    public Mf2Parser() {
+        this.includeAlternates = true;
+        this.includeRelUrls = false;
+    }
+    
+    public Mf2Parser setIncludeAlternates(boolean includeAlts) {
+        this.includeAlternates = includeAlts;
+        return this;
+    }
+    
+    public Mf2Parser setIncludeRelUrls(boolean includeRelUrls) {
+        this.includeRelUrls = includeRelUrls;
+        return this;
     }
 
     public JsonDict parse(URI resource) throws IOException {
@@ -46,13 +61,16 @@ public class Parser {
         JsonList items = dict.getOrCreateList("items");
         parseMicroformats(doc, baseUri, items);
         
-        JsonDict rels = dict.getOrCreateDict("rels");
-        JsonDict relUrls = dict.getOrCreateDict("rel-urls");
-        parseRels(doc, baseUri, rels, relUrls);
+        parseRels(doc, baseUri, dict);
         return dict;
     }
 
-    private void parseRels(Document doc, URI baseUri, JsonDict relsDict, JsonDict relUrlsDict) {
+    private void parseRels(Document doc, URI baseUri, JsonDict dict) {
+        dict.getOrCreateDict("rels");
+        if (includeRelUrls) {
+            dict.getOrCreateDict("rel-urls");
+        }
+        
         for (Element link : doc.select("a[rel][href],link[rel][href]")) {
             String relStr = link.attr("rel");
             String href = link.attr("href");
@@ -65,21 +83,41 @@ public class Parser {
                     rels.add(rel);
                 }
             }
-            
-            for (Object rel : rels) {
-                relsDict.getOrCreateList((String) rel).add(href);
-            }
-            
-            JsonDict urlDict = relUrlsDict.getOrCreateDict(href);
-            urlDict.put("rels", rels);
-            for (String attr : Arrays.asList("hreflang", "media", "type", "title")) {
-                if (link.hasAttr(attr)) {
-                    urlDict.put(attr, link.attr(attr));
+
+            if (includeAlternates && rels.contains("alternate")) {
+                String relNoAlt = Pattern.compile("(^|\\s+)alternate(\\s+|$)").matcher(relStr).replaceAll(" ").trim();
+                JsonDict altDict = new JsonDict();
+                altDict.put("url", href);
+                altDict.put("rel", relNoAlt);
+                for (String attr : Arrays.asList("hreflang", "media", "type", "title")) {
+                    if (link.hasAttr(attr)) {
+                        altDict.put(attr, link.attr(attr));
+                    }
                 }
+                String textContent = link.text().trim();
+                if (!textContent.isEmpty()) {
+                    altDict.put("text", textContent);
+                }
+                dict.getOrCreateList("alternates").add(altDict);
             }
-            String textContent = link.text().trim();
-            if (!textContent.isEmpty()) {
-                urlDict.put("text", textContent);
+            else {
+                for (Object rel : rels) {
+                    dict.getDict("rels").getOrCreateList((String) rel).add(href);
+                }
+
+                if (includeRelUrls) {
+                    JsonDict urlDict = dict.getDict("rel-urls").getOrCreateDict(href);
+                    urlDict.put("rels", rels);
+                    for (String attr : Arrays.asList("hreflang", "media", "type", "title")) {
+                        if (link.hasAttr(attr)) {
+                            urlDict.put(attr, link.attr(attr));
+                        }
+                    }
+                    String textContent = link.text().trim();
+                    if (!textContent.isEmpty()) {
+                        urlDict.put("text", textContent);
+                    }
+                }
             }
         }
     }
@@ -416,11 +454,13 @@ public class Parser {
     }
 
     public static void main(String args[]) throws IOException, URISyntaxException {
-        Parser p = new Parser();
-//        JsonDict result = p.parse(
-//                "<a class=\"h-card\" href=\"/testing/me#profile\"><img src=\"/static/img/profile.jpg\"/>Kyle Mahan</a>", 
-//                new URI("https://kylewm.com"));
-        JsonDict result = p.parse(new URI("https://kylewm.com"));
+        Mf2Parser p = new Mf2Parser()
+            .setIncludeAlternates(true)
+            .setIncludeRelUrls(true);
+        JsonDict result = p.parse(
+                "<link rel=\"alternate feed\" type=\"application/rdf+xml\" href=\"http://example.com/feed.xml\"/><a rel=\"me\" class=\"h-card\" href=\"/testing/me#profile\"><img src=\"/static/img/profile.jpg\"/>Kyle Mahan</a>", 
+                new URI("https://kylewm.com"));
+        //JsonDict result = p.parse(new URI("https://kylewm.com"));
         System.out.println(result);
     }
 
