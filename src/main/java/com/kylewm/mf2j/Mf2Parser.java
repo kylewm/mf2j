@@ -65,7 +65,6 @@ public class Mf2Parser {
      * @param html the contents of the document to parse
      * @param baseUri the URI where the document exists, used for normalization
      * @return a well-defined JSON structure containing the parsed microformats2 data.
-     * @throws IOException
      */
     public JsonDict parse(String html, URI baseUri) {
         Document doc = Jsoup.parse(html);
@@ -85,7 +84,6 @@ public class Mf2Parser {
      * @param doc the Jsoup document to parse
      * @param baseUri the URI where the document exists, used for normalization
      * @return a well-defined JSON structure containing the parsed microformats2 data.
-     * @throws IOException
      */    
     public JsonDict parse(Document doc, URI baseUri) {
         baseUri = findBaseUri(doc, baseUri);
