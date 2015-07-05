@@ -21,26 +21,52 @@ public class Mf2Parser {
     private boolean includeAlternates;
     private boolean includeRelUrls;
 
+    /**
+     * Constructor
+     */
     public Mf2Parser() {
         this.includeAlternates = true;
         this.includeRelUrls = false;
     }
-    
+
+    /**
+     * If true, include the "alternates" key in the parsed output.
+     * @param includeAlts
+     * @return this, for method chaining
+     */
     public Mf2Parser setIncludeAlternates(boolean includeAlts) {
         this.includeAlternates = includeAlts;
         return this;
     }
-    
+
+    /**
+     * If true, include the experimental "rel-urls" hash in the parsed output.
+     * @param includeRelUrls
+     * @return this, for method chaining
+     */
     public Mf2Parser setIncludeRelUrls(boolean includeRelUrls) {
         this.includeRelUrls = includeRelUrls;
         return this;
     }
 
+    /**
+     * Fetch a remote resource and parse it for microformats2.
+     * @param resource the URI of the resource to fetch.
+     * @return a well-defined JSON structure containing the parsed microformats2 data.
+     * @throws IOException
+     */
     public JsonDict parse(URI resource) throws IOException {
         Document text = Jsoup.connect(resource.toString()).get();
         return parse(text, resource);
     }
 
+    /**
+     * Parse an existing document for microformats2.
+     * @param html the contents of the document to parse
+     * @param baseUri the URI where the document exists, used for normalization
+     * @return a well-defined JSON structure containing the parsed microformats2 data.
+     * @throws IOException
+     */
     public JsonDict parse(String html, URI baseUri) {
         Document doc = Jsoup.parse(html);
         return parse(doc, baseUri);
@@ -54,13 +80,20 @@ public class Mf2Parser {
         return baseUri;
     }
 
+    /**
+     * Parse an existing document for microformats2.
+     * @param doc the Jsoup document to parse
+     * @param baseUri the URI where the document exists, used for normalization
+     * @return a well-defined JSON structure containing the parsed microformats2 data.
+     * @throws IOException
+     */    
     public JsonDict parse(Document doc, URI baseUri) {
         baseUri = findBaseUri(doc, baseUri);
-        
+
         JsonDict dict = new JsonDict();
         JsonList items = dict.getOrCreateList("items");
         parseMicroformats(doc, baseUri, items);
-        
+
         parseRels(doc, baseUri, dict);
         return dict;
     }
@@ -70,12 +103,12 @@ public class Mf2Parser {
         if (includeRelUrls) {
             dict.getOrCreateDict("rel-urls");
         }
-        
+
         for (Element link : doc.select("a[rel][href],link[rel][href]")) {
             String relStr = link.attr("rel");
             String href = link.attr("href");
             href = baseUri.resolve(href).toString();
-            
+
             JsonList rels = new JsonList();
             for (String rel : relStr.split(" ")) {
                 rel = rel.trim();
@@ -143,7 +176,7 @@ public class Mf2Parser {
             parseProperties(child, baseUri, itemDict);
         }
 
-        if (!properties.containsKey("name")) { 
+        if (!properties.containsKey("name")) {
             String impliedName = parseImpliedName(elem);
             if (impliedName != null) {
                 JsonList implNameList = new JsonList();
@@ -167,7 +200,7 @@ public class Mf2Parser {
                 properties.put("photo", implPhotoList);
             }
         }
-        
+
         return itemDict;
     }
 
@@ -279,8 +312,8 @@ public class Mf2Parser {
             return elem.attr("value");
         }
         return elem.text().trim();
-        
-        
+
+
     }
 
     private JsonDict parseHtmlProperty(Element elem) {
@@ -289,7 +322,7 @@ public class Mf2Parser {
         dict.put("text", elem.text());
         return dict;
     }
-    
+
     private String parseImpliedPhoto(Element elem, URI baseUri) {
         String href = parseImpliedPhotoRelative(elem);
         if (href != null) {
@@ -297,20 +330,20 @@ public class Mf2Parser {
         }
         return null;
     }
-    
+
     private String parseImpliedPhotoRelative(Element elem) {
         String[][] tagAttrs = {
                 {"img", "src"},
                 {"object", "data"},
         };
-        
+
         for (String[] tagAttr : tagAttrs) {
             String tag = tagAttr[0], attr = tagAttr[1];
             if (tag.equals(elem.tagName()) && elem.hasAttr(attr)) {
                 return elem.attr(attr);
             }
         }
-        
+
         for (String[] tagAttr : tagAttrs) {
             String tag = tagAttr[0], attr = tagAttr[1];
             Elements children = filterByTag(elem.children(), tag);
@@ -321,7 +354,7 @@ public class Mf2Parser {
                 }
             }
         }
-        
+
         Elements children = elem.children();
         if (children.size() == 1) {
             Element child = children.first();
@@ -336,7 +369,7 @@ public class Mf2Parser {
                 }
             }
         }
-        
+
         return null;
     }
 
@@ -350,12 +383,12 @@ public class Mf2Parser {
 
     private String parseImpliedUrlRelative(Element elem) {
         //     if a.h-x[href] or area.h-x[href] then use that [href] for url
-        if (("a".equals(elem.tagName()) || "area".equals(elem.tagName())) 
-                && elem.hasAttr("href")) { 
+        if (("a".equals(elem.tagName()) || "area".equals(elem.tagName()))
+                && elem.hasAttr("href")) {
             return elem.attr("href");
         }
         //else if .h-x>a[href]:only-of-type:not[.h-*] then use that [href] for url
-        //else if .h-x>area[href]:only-of-type:not[.h-*] then use that [href] for url 
+        //else if .h-x>area[href]:only-of-type:not[.h-*] then use that [href] for url
         for (String childTag : Arrays.asList("a", "area")) {
             Elements children = filterByTag(elem.children(), childTag);
             if(children.size() == 1) {
@@ -365,11 +398,11 @@ public class Mf2Parser {
                 }
             }
         }
-        
+
         return null;
     }
 
-    
+
     private String parseImpliedName(Element elem) {
         if (("img".equals(elem.tagName()) || ("area".equals(elem.tagName())) && elem.hasAttr("alt"))) {
             return elem.attr("alt");
@@ -377,13 +410,13 @@ public class Mf2Parser {
         if ("abbr".equals(elem.tagName()) && elem.hasAttr("title")) {
             return elem.attr("title");
         }
-        
+
         Elements children = elem.children();
         if (children.size() == 1) {
             Element child = children.first();
             // else if .h-x>img:only-child[alt]:not[.h-*] then use that img alt for name
             // else if .h-x>area:only-child[alt]:not[.h-*] then use that area alt for name
-            if (!hasRootClass(child) 
+            if (!hasRootClass(child)
                     && ("img".equals(child.tagName()) || "area".equals(child.tagName()))
                     && child.hasAttr("alt")) {
                 return child.attr("alt");
@@ -398,7 +431,7 @@ public class Mf2Parser {
                 Element grandChild = grandChildren.first();
                 // else if .h-x>:only-child>img:only-child[alt]:not[.h-*] then use that img alt for name
                 // else if .h-x>:only-child>area:only-child[alt]:not[.h-*] then use that area alt for name
-                if (!hasRootClass(grandChild) 
+                if (!hasRootClass(grandChild)
                         && ("img".equals(grandChild.tagName()) || "area".equals(grandChild.tagName()))
                         && grandChild.hasAttr("alt")) {
                     return grandChild.attr("alt");
@@ -409,13 +442,13 @@ public class Mf2Parser {
                 }
             }
         }
-            
+
         // else use the textContent of the .h-x for name
         // drop leading & trailing white-space from name, including nbsp
         return elem.text().trim();
     }
 
-    
+
 
     private Elements filterByTag(Elements elems, String tag) {
         Elements filtered = new Elements();
@@ -451,17 +484,6 @@ public class Mf2Parser {
 
     private boolean isRootClass(String className) {
         return className.startsWith("h-");
-    }
-
-    public static void main(String args[]) throws IOException, URISyntaxException {
-        Mf2Parser p = new Mf2Parser()
-            .setIncludeAlternates(true)
-            .setIncludeRelUrls(true);
-        JsonDict result = p.parse(
-                "<link rel=\"alternate feed\" type=\"application/rdf+xml\" href=\"http://example.com/feed.xml\"/><a rel=\"me\" class=\"h-card\" href=\"/testing/me#profile\"><img src=\"/static/img/profile.jpg\"/>Kyle Mahan</a>", 
-                new URI("https://kylewm.com"));
-        //JsonDict result = p.parse(new URI("https://kylewm.com"));
-        System.out.println(result);
     }
 
 }

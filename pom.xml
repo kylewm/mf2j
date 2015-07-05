@@ -2,13 +2,96 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.kylewm</groupId>
   <artifactId>mf2j</artifactId>
-  <version>0.0.4-SNAPSHOT</version>
-  <name>Microformats2 Parser for Java</name>
+  <version>0.0.4</version>
+  <packaging>jar</packaging>
+  <name>mf2j</name>
+  <description>Microformats2 Parser for Java</description>
+  <url>https://github.com/kylewm/mf2j</url>
+
+  <licenses>
+    <license>
+      <name>CC0 1.0 Universal</name>
+      <url>http://creativecommons.org/publicdomain/zero/1.0/</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Kyle Mahan</name>
+      <email>mf2j@kylewm.com</email>
+      <url>https://kylewm.com</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git@github.com:kylewm/mf2j.git</connection>
+    <developerConnection>scm:git:git@github.com:kylewm/mf2j.git</developerConnection>
+    <url>git@github.com:kylewm/mf2j.git</url>
+  </scm>
+
   <dependencies>
-  	<dependency>
-  		<groupId>org.jsoup</groupId>
-  		<artifactId>jsoup</artifactId>
-  		<version>1.8.2</version>
-  	</dependency>
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.8.2</version>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+<!--
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.3</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
+-->
+    </plugins>
+  </build>
+
 </project>
