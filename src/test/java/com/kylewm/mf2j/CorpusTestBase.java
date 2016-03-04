@@ -1,6 +1,8 @@
 package com.kylewm.mf2j;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.core.IsEqual;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.URI;
@@ -9,8 +11,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import static org.junit.Assert.assertTrue;
+import java.util.HashMap;
 
 public abstract class CorpusTestBase
 {
@@ -27,11 +28,11 @@ public abstract class CorpusTestBase
         Mf2Parser parser = new Mf2Parser();
         String html = LoadResource(htmlPath);
         String json = LoadResource(jsonPath);
-        JsonDict parsed = parser.parse(html, new URI(""));
-        JsonDict expected = mapper.readValue(json, JsonDict.class);
+        HashMap actual = mapper.readValue(parser.parse(html, new URI("")).toString(), HashMap.class);
+        HashMap expected = mapper.readValue(json, HashMap.class);
         if (expected.containsKey("rel-urls"))
             expected.remove("rel-urls");
-        assertTrue(parsed.equals(expected));
+        Assert.assertEquals(expected, actual);
     }
 
     protected void Run(String prefix) throws IOException, URISyntaxException {
