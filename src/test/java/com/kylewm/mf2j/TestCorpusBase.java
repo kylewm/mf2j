@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
-public abstract class CorpusTestBase
+public abstract class TestCorpusBase
 {
     protected String LoadResource(String resourcePath) throws URISyntaxException, IOException
     {

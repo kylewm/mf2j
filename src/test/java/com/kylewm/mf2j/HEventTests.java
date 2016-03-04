@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HEventTests extends CorpusTestBase
+public class HEventTests extends TestCorpusBase
 {
     @Test
     public void AmPm() throws IOException, URISyntaxException

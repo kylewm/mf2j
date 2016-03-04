@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HAsNoteTests extends CorpusTestBase
+public class HAsNoteTests extends TestCorpusBase
 {
     @Test
     public void Note() throws IOException, URISyntaxException

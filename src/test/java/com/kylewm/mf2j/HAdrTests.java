@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HAdrTests extends CorpusTestBase
+public class HAdrTests extends TestCorpusBase
 {
     @Test
     public void Geo() throws IOException, URISyntaxException

@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HRecipeTests extends CorpusTestBase
+public class HRecipeTests extends TestCorpusBase
 {
     @Test
     public void All() throws IOException, URISyntaxException

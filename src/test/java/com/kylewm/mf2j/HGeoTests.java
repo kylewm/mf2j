@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HGeoTests extends CorpusTestBase
+public class HGeoTests extends TestCorpusBase
 {
     @Test
     public void AbbrPattern() throws IOException, URISyntaxException

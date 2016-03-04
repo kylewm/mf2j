@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HReviewAggregateTests extends CorpusTestBase
+public class HReviewAggregateTests extends TestCorpusBase
 {
     @Test
     public void HEvent() throws IOException, URISyntaxException

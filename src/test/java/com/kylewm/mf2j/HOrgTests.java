@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HOrgTests extends CorpusTestBase
+public class HOrgTests extends TestCorpusBase
 {
     @Test
     public void Hyperlink() throws IOException, URISyntaxException

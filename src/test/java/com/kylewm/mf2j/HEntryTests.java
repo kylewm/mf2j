@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HEntryTests extends CorpusTestBase
+public class HEntryTests extends TestCorpusBase
 {
     @Test
     public void ImpliedValueNested() throws IOException, URISyntaxException

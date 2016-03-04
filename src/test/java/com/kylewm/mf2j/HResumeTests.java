@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HResumeTests extends CorpusTestBase
+public class HResumeTests extends TestCorpusBase
 {
     @Test
     public void Affiliation() throws IOException, URISyntaxException

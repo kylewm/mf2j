@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class RelTests extends CorpusTestBase
+public class RelTests extends TestCorpusBase
 {
     @Test
     public void DuplicateRels() throws IOException, URISyntaxException

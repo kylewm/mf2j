@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HProductTests extends CorpusTestBase
+public class HProductTests extends TestCorpusBase
 {
     @Test
     public void Aggregate() throws IOException, URISyntaxException

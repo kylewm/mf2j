@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class HCardTests extends CorpusTestBase
+public class HCardTests extends TestCorpusBase
 {
     @Test
     public void BaseUrl() throws IOException, URISyntaxException
