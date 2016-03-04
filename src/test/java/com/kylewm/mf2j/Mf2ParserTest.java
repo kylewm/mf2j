@@ -36,8 +36,86 @@ public class Mf2ParserTest
     }
 
     @Test
+    public void BaseUrl() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/baseurl");
+    }
+
+    @Test
+    public void ChildImplied() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/childimplied");
+    }
+
+    @Test
+    public void ExtendedDescription() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/extendeddescription");
+    }
+
+    @Test
     public void HCard() throws IOException, URISyntaxException
     {
         ParseSample("/microformats-v2/h-card/hcard");
+    }
+
+    @Test
+    public void HOrgHCard() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/horghcard");
+    }
+
+    @Test
+    public void HyperlinkedPhoto() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/hyperlinkedphoto");
+    }
+
+    @Test
+    public void ImpliedName() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/impliedname");
+    }
+
+    @Test
+    public void ImpliedPhoto() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/impliedphoto");
+    }
+
+    @Test
+    public void ImpliedUrl() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/impliedurl");
+    }
+
+    @Test
+    public void JustAHyperlink() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/justahyperlink");
+    }
+
+    @Test
+    public void JustAName() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/justaname");
+    }
+
+    @Test
+    public void Nested() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/nested");
+    }
+
+    @Test
+    public void PProperty() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/p-property");
+    }
+
+    @Test
+    public void RelativeUrls() throws IOException, URISyntaxException
+    {
+        ParseSample("/microformats-v2/h-card/relativeurls");
     }
 }
