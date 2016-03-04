@@ -1,7 +1,6 @@
 package com.kylewm.mf2j;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.core.IsEqual;
 import org.junit.Assert;
 
 import java.io.IOException;
