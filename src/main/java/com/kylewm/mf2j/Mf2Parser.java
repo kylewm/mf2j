@@ -74,7 +74,16 @@ public class Mf2Parser {
     private URI findBaseUri(Document doc, URI baseUri) {
         Element base = doc.getElementsByTag("base").first();
         if (base != null && base.hasAttr("href")) {
-            return baseUri.resolve(base.attr("href"));
+            baseUri = baseUri.resolve(base.attr("href"));
+        }
+        // normalize URIs with missing path
+        String path = baseUri.getPath();
+        if (path == null || path.isEmpty())
+        {
+            try
+            {
+                baseUri = new URI(baseUri.getScheme(), baseUri.getAuthority(), "/", null, null);
+            } catch (URISyntaxException e) {}
         }
         return baseUri;
     }
