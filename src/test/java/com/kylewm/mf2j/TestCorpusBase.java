@@ -27,7 +27,7 @@ public abstract class TestCorpusBase
         Mf2Parser parser = new Mf2Parser();
         String html = LoadResource(htmlPath);
         String json = LoadResource(jsonPath);
-        HashMap actual = mapper.readValue(parser.parse(html, new URI("")).toString(), HashMap.class);
+        HashMap actual = mapper.readValue(parser.parse(html, new URI("http://example.com")).toString(), HashMap.class);
         HashMap expected = mapper.readValue(json, HashMap.class);
         //TODO: remove when parser supports rel-urls
         if (expected.containsKey("rel-urls"))
