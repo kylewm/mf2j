@@ -2,15 +2,18 @@ package com.kylewm.mf2j;
 
 import java.util.*;
 
-public class JsonMap implements Map<String, Object>
-{
+/**
+ * Wraps raw object returned by Jackson ObjectMapper.readValue.
+ * Overrides toString to return JSON with sorted keys.
+ */
+public class SortedJsonMap implements Map<String, Object> {
     private Map<String,Object> _m;
 
-    public JsonMap(Map<String,Object> m) {
+    public SortedJsonMap(Map<String,Object> m) {
         _m = m;
     }
 
-    public static String toString(ArrayList<Object> arr) {
+    protected static String toString(ArrayList<Object> arr) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
         Boolean first = true;
@@ -32,7 +35,7 @@ public class JsonMap implements Map<String, Object>
         return sb.toString();
     }
 
-    public static String toString(Map<String,Object> map) {
+    protected static String toString(Map<String,Object> map) {
         TreeSet<String> keys = new TreeSet<String>(map.keySet());
         StringBuilder sb = new StringBuilder();
         sb.append("{");
