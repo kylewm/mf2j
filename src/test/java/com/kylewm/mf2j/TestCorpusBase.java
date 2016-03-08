@@ -55,8 +55,8 @@ public abstract class TestCorpusBase
         String html = LoadResource(htmlPath);
         String json = LoadResource(jsonPath);
         JsonDict parsed = parser.parse(html, new URI("http://example.com"));
-        Map<String,Object> actual = mapper.readValue(parsed.toString(), Map.class);
-        Map<String,Object> expected = mapper.readValue(json, Map.class);
+        JsonMap actual = new JsonMap(mapper.readValue(parsed.toString(), Map.class));
+        JsonMap expected = new JsonMap(mapper.readValue(json, Map.class));
         //TODO: remove when whitespace issues are sorted out
         CollapseWhitespace(actual);
         CollapseWhitespace(expected);
