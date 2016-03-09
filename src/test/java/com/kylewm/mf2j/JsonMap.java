@@ -4,16 +4,23 @@ import java.util.*;
 
 /**
  * Wraps raw object returned by Jackson ObjectMapper.readValue.
- * Overrides toString to return JSON with sorted keys.
+ * Overrides toString to return JSON with optionally sorted keys.
  */
-public class SortedJsonMap implements Map<String, Object> {
+public class JsonMap implements Map<String, Object> {
     private Map<String,Object> _m;
+    private Boolean _sorted;
 
-    public SortedJsonMap(Map<String,Object> m) {
+    public JsonMap(Map<String,Object> m) {
         _m = m;
+        _sorted = false;
     }
 
-    protected static String toString(ArrayList<Object> arr) {
+    public JsonMap Sorted(Boolean s) {
+        _sorted = s;
+        return this;
+    }
+
+    protected String toString(ArrayList<Object> arr) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
         Boolean first = true;
@@ -35,8 +42,8 @@ public class SortedJsonMap implements Map<String, Object> {
         return sb.toString();
     }
 
-    protected static String toString(Map<String,Object> map) {
-        TreeSet<String> keys = new TreeSet<String>(map.keySet());
+    protected String toString(Map<String,Object> map) {
+        Set<String> keys = _sorted ? new TreeSet<String>(map.keySet()) : map.keySet();
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         Boolean first = true;

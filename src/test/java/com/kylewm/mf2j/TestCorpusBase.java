@@ -55,8 +55,8 @@ public abstract class TestCorpusBase
         String html = LoadResource(htmlPath);
         String json = LoadResource(jsonPath);
         JsonDict parsed = parser.parse(html, new URI("http://example.com"));
-        SortedJsonMap actual = new SortedJsonMap(mapper.readValue(parsed.toString(), Map.class));
-        SortedJsonMap expected = new SortedJsonMap(mapper.readValue(json, Map.class));
+        JsonMap actual = new JsonMap(mapper.readValue(parsed.toString(), Map.class)).Sorted(true);
+        JsonMap expected = new JsonMap(mapper.readValue(json, Map.class)).Sorted(true);
         //TODO: remove when whitespace issues are sorted out
         CollapseWhitespace(actual);
         CollapseWhitespace(expected);
