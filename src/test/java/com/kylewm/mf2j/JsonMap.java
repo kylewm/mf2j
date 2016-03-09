@@ -20,6 +20,12 @@ public class JsonMap implements Map<String, Object> {
         return this;
     }
 
+    public static String escapeString(String str) {
+        return str.replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+    }
+
     protected String toString(ArrayList<Object> arr) {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
@@ -35,7 +41,7 @@ public class JsonMap implements Map<String, Object> {
             } else if (val instanceof ArrayList) {
                 sb.append(toString((ArrayList) val));
             } else if (val instanceof String) {
-                sb.append("\"" + val + "\"");
+                sb.append("\"" + escapeString((String) val) + "\"");
             }
         }
         sb.append("]");
@@ -60,7 +66,7 @@ public class JsonMap implements Map<String, Object> {
             } else if (val instanceof ArrayList) {
                 sb.append(toString((ArrayList) val));
             } else if (val instanceof String) {
-                sb.append("\"" + val + "\"");
+                sb.append("\"" + escapeString((String) val) + "\"");
             }
         }
         sb.append("}");
