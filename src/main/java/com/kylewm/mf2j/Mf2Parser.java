@@ -326,7 +326,8 @@ public class Mf2Parser {
     private JsonDict parseHtmlProperty(Element elem) {
         JsonDict dict = new JsonDict();
         dict.put("html", elem.html());
-        dict.put("text", elem.text());
+        // TODO replace nested <img> with alt or src
+        dict.put("value", elem.text());
         return dict;
     }
 
