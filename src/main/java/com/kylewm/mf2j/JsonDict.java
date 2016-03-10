@@ -1,5 +1,10 @@
 package com.kylewm.mf2j;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,4 +87,62 @@ public class JsonDict extends HashMap<String, Object> {
         return sb.toString();
     }
 
+    public static JsonDict fromString(String json) throws IOException
+    {
+        JsonParser parser = new JsonFactory().createParser(json);
+        parser.nextToken();
+        return parseDict(parser);
+    }
+
+    protected static JsonList parseList(JsonParser parser) throws IOException
+    {
+        JsonList list = new JsonList();
+        JsonToken token = parser.getCurrentToken();
+        if (token != JsonToken.START_ARRAY)
+            throw new IOException("expected START_ARRAY");
+        while ((token = parser.nextToken()) != JsonToken.END_ARRAY) {
+            switch (token) {
+                case START_OBJECT:
+                    list.add(parseDict(parser));
+                    break;
+                case START_ARRAY:
+                    list.add(parseList(parser));
+                    break;
+                case VALUE_STRING:
+                    list.add(parser.getText());
+                    break;
+                default:
+                    throw new IOException("unexpected token type " + token);
+            }
+        }
+        return list;
+    }
+
+    protected static JsonDict parseDict(JsonParser parser) throws IOException
+    {
+        JsonDict dict = new JsonDict();
+        JsonToken token = parser.getCurrentToken();
+        if (token != JsonToken.START_OBJECT)
+            throw new IOException("expected START_OBJECT");
+        while ((token = parser.nextToken()) != JsonToken.END_OBJECT) {
+            if (token != JsonToken.FIELD_NAME)
+                throw new IOException("expected FIELD_NAME");
+            String key = parser.getText();
+            token = parser.nextToken();
+            switch (token) {
+                case START_OBJECT:
+                    dict.put(key, parseDict(parser));
+                    break;
+                case START_ARRAY:
+                    dict.put(key, parseList(parser));
+                    break;
+                case VALUE_STRING:
+                    dict.put(key, parser.getText());
+                    break;
+                default:
+                    throw new IOException("unexpected token type " + token);
+            }
+        }
+        return dict;
+    }
 }

@@ -1,6 +1,5 @@
 package com.kylewm.mf2j;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -50,20 +49,18 @@ public abstract class TestCorpusBase
     }
 
     protected void RunTestCase(String htmlPath, String jsonPath) throws IOException, URISyntaxException {
-        ObjectMapper mapper = new ObjectMapper();
         Mf2Parser parser = new Mf2Parser();
         String html = LoadResource(htmlPath);
         String json = LoadResource(jsonPath);
         JsonDict parsed = parser.parse(html, new URI("http://example.com"));
-        JsonMap actual = new JsonMap(mapper.readValue(parsed.toString(), Map.class)).Sorted(true);
-        JsonMap expected = new JsonMap(mapper.readValue(json, Map.class)).Sorted(true);
+        JsonDict expected = JsonDict.fromString(json);
         //TODO: remove when whitespace issues are sorted out
-        CollapseWhitespace(actual);
+        CollapseWhitespace(parsed);
         CollapseWhitespace(expected);
         //TODO: remove when parser supports rel-urls
         if (expected.containsKey("rel-urls"))
             expected.remove("rel-urls");
-        Assert.assertEquals(expected, actual);
+        Assert.assertEquals(expected, parsed);
     }
 
     protected void Run(String prefix) throws IOException, URISyntaxException {
