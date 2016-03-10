@@ -258,7 +258,7 @@ public class Mf2Parser {
             itemDict.getOrCreateList("children").add(valueObj);
         }
 
-        if (!isProperty && !isMicroformat) {
+        if (!isMicroformat) {
             for (Element child : elem.children()) {
                 parseProperties(child, baseUri, itemDict);
             }
