@@ -211,6 +211,26 @@ public class Mf2Parser {
         return itemDict;
     }
 
+    private Object parseChildValue(String className, JsonDict valueObj, Object value) {
+        JsonDict properties = (JsonDict) valueObj.get("properties");
+        //if it's a p-* property element, use the first p-name of the h-* child
+        if (className.startsWith("p-") && properties.containsKey("name")) {
+            JsonList names = (JsonList) properties.get("name");
+            if (names.size() > 0)
+                return names.get(0);
+        }
+        //else if it's an e-* property element, re-use its { } structure with existing value: inside.
+        //TODO: implement this or find out if its handled by default case below
+        //else if it's a u-* property element and the h-* child has a u-url, use the first such u-url
+        if (className.startsWith("u-") && properties.containsKey("url")) {
+            JsonList urls = (JsonList) properties.get("url");
+            if (urls.size() > 0)
+                return urls.get(0);
+        }
+        //else use the parsed property value per p-*,u-*,dt-* parsing respectively
+        return value;
+    }
+
     private void parseProperties(Element elem, URI baseUri, JsonDict itemDict) {
         boolean isProperty = false, isMicroformat = false;
 
@@ -246,9 +266,8 @@ public class Mf2Parser {
 
             if (propName != null) {
                 if (isMicroformat && valueObj != null) {
-                    JsonDict copy = new JsonDict(valueObj);
-                    copy.put("value", value);
-                    value = copy;
+                    valueObj.put("value", parseChildValue(className, valueObj, value));
+                    value = valueObj;
                 }
                 itemDict.getDict("properties").getOrCreateList(propName).add(value);
             }
